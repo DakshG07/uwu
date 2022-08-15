@@ -32,7 +32,8 @@ type InstallFlavours struct {
 	To        string  `yaml:"to"`
 }
 
+type Entry interface {}
+
 type Flavour struct {
-	Default   []string `yaml:"default"`
-	NoItalics []string `yaml:"no-italics"`
+	entries []Entry
 }
