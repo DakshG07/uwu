@@ -9,8 +9,7 @@ import (
 	"os/user"
 	"path"
 	"strings"
-
-	"github.com/ghostx31/uwu/internal/pkg/structs"
+	"catppuccin/uwu/internal/pkg/structs"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +36,7 @@ func installer(packages []string) {
 	var success []string
 	for i := 0; i < len(packages); i++ {
 		repo := packages[i]
-		rc := fmt.Sprintf("https://raw.githubusercontent.com/ghostx31/%s/main/.ctprc", repo)
+		rc := fmt.Sprintf("https://raw.githubusercontent.com/catppuccin/%s/main/.ctprc", repo)
 		res, err := http.Get(rc)
 		if err != nil {
 			fmt.Println("\nCould not make GET request")
@@ -57,7 +56,7 @@ func installer(packages []string) {
 	programsURLs := []string{}
 
 	for i := 0; i < len(success); i++ {
-		rc := "https://raw.githubusercontent.com/ghostx31/" + success[i] + "/main/.ctprc"
+		rc := "https://raw.githubusercontent.com/catppuccin/" + success[i] + "/main/.ctprc"
 		res, _ := http.Get(rc)
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
@@ -109,7 +108,7 @@ func cloneRepo(repo string) {
 	dir, _ := os.Getwd()
 	stagePath := path.Join(dir, "stage", repo)
 	_, err := git.PlainClone(stagePath, false, &git.CloneOptions{
-		URL:      "https://github.com/ghostx31/" + repo + ".git",
+		URL:      "https://github.com/catppuccin/" + repo + ".git",
 		Progress: os.Stdout,
 	})
 	if err != nil {
