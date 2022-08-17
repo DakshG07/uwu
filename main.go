@@ -1,6 +1,6 @@
 package main
 
-import "github.com/ghostx31/uwu/cmd"
+import "catppuccin/uwu/cmd"
 
 func main() {
 	cmd.Execute()
