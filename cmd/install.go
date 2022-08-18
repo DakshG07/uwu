@@ -4,6 +4,9 @@ import (
 	"catppuccin/uwu/internal/pkg/structs"
 	"catppuccin/uwu/internal/utils"
 	"fmt"
+	"regexp"
+	"path"
+	"runtime"
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
 	"io"
@@ -16,8 +19,11 @@ import (
 	"strings"
 )
 
+var Flavour string
+
 func init() {
 	rootCmd.AddCommand(installCmd)
+	installCmd.Flags().StringVarP(&Flavour, "flavour", "f", "all", "Custom flavour")
 }
 
 var installCmd = &cobra.Command{
@@ -32,7 +38,6 @@ var installCmd = &cobra.Command{
 func installer(packages []string) {
 	// Hard-coded variables, will add functionality to change these via flags
 	//mode := "default"
-	flavour := "all"
 	fmt.Println("Installing packages...")
 	for i := 0; i < len(packages); i++ {
 		fmt.Printf(packages[i])
@@ -106,8 +111,8 @@ func installer(packages []string) {
 		baseDir := cloneRepo(programs[i].AppName)
 		ctprc := programs[i]
 		// Symlink the repo
-		switch flavour {
-		// TO-DO: Implement modes
+		switch Flavour {
+			// TO-DO: Implement modes
 		case "all":
 			makeLinks(baseDir, ctprc.InstallFlavours.All.Default, ctprc.InstallFlavours.To, programsLocations[i]) // The magic line
 		case "latte":
@@ -148,13 +153,52 @@ func makeLinks(baseDir string, links []string, to string, finalDir string) {
 		shortPath := re.FindString(link)
 		name := to
 		if strings.Contains(shortPath[2:], ".") {
+			// Path is a file, handle that
 			name = path.Join(to, shortPath)
+			handleFilePath(finalDir, name)
+		} else {
+			handleDirPath(finalDir, name)
 		}
 		fmt.Printf("Linking: %s to %s via %s\n", link, finalDir, name)
 		// Use the name as name, the link as the from, and the finalDir as the to
 		makeLink(link, finalDir, name)
 	}
 }
+
+func handleDirPath(finalDir string, name string) {
+	// Check if dir to link already exists
+	fullDir := path.Join(finalDir, name)
+	var resp string
+	if utils.PathExists(fullDir) {
+		fmt.Printf("Directory %s already exists.\nWould you like to move the directory?(y/N): ", fullDir)
+		if fmt.Scan(&resp); resp == "y" {
+			fmt.Println("\nReplacing directory...")
+			prefix, suffix := path.Split(fullDir)
+			renamed := suffix + "-" + time.Now().Format("06-01-02")
+			renamed = path.Join(prefix, renamed)
+			err := os.Rename(fullDir, renamed)
+			if err != nil {
+				fmt.Println("Failed to move directory. You may have to rerun this command with elevated permissions, or the old directory may already exist.")
+				fmt.Printf("(Error: %s)\n", err)
+			}
+		}
+	}
+}
+
+
+func handleFilePath(finalDir string, name string) {
+	// Check if dir to link already exists
+	fileFolder, _ := path.Split(name)
+	fullDir := path.Join(finalDir, fileFolder)
+	if !utils.PathExists(fullDir) {
+		err := os.Mkdir(fullDir, 0755)
+		if err != nil {
+			fmt.Printf("Failed to create parent directory %s", fullDir)
+		}
+	}
+}
+
+
 
 func makeLink(from string, to string, name string) {
 	if to[len(to)-1:] != "/" {
